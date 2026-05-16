@@ -4,6 +4,19 @@ API REST para gestión inteligente de turnos de barbería.
 
 Este proyecto conecta mi experiencia real como barbero con mi formación en desarrollo backend. El objetivo es construir una plataforma moderna para administrar clientes, barberos, servicios, horarios disponibles, reservas, cancelaciones y disponibilidad dinámica.
 
+## Deploy
+
+API online:
+
+https://barberflow-api-9feo.onrender.com
+
+Swagger online:
+
+https://barberflow-api-9feo.onrender.com/api/docs
+
+Health check:
+
+https://barberflow-api-9feo.onrender.com/v1/health
 ## Tecnologías utilizadas
 
 - Node.js
