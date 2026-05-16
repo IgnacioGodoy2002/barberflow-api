@@ -1,98 +1,122 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# BarberFlow API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST para gestión inteligente de turnos de barbería.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Este proyecto conecta mi experiencia real como barbero con mi formación en desarrollo backend. El objetivo es construir una plataforma moderna para administrar clientes, barberos, servicios, horarios disponibles, reservas, cancelaciones y disponibilidad dinámica.
 
-## Description
+## Tecnologías utilizadas
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- Node.js
+- TypeScript
+- NestJS
+- PostgreSQL
+- Prisma ORM
+- JWT Authentication
+- Role Based Access Control
+- Swagger
+- Neon PostgreSQL
+- Git / GitHub
 
-## Project setup
+## Funcionalidades principales
 
-```bash
-$ npm install
-```
+- Registro e inicio de sesión de usuarios.
+- Autenticación con JWT.
+- Roles de usuario: ADMIN, BARBER y CLIENT.
+- Gestión de servicios de barbería.
+- Gestión de perfiles de barberos.
+- Asignación de servicios a barberos.
+- Gestión de horarios laborales por barbero.
+- Motor de disponibilidad dinámica.
+- Creación de reservas de turnos.
+- Cancelación de turnos.
+- Validación de conflictos para evitar doble reserva.
+- Documentación interactiva con Swagger.
 
-## Compile and run the project
+## Roles del sistema
 
-```bash
-# development
-$ npm run start
+### ADMIN
 
-# watch mode
-$ npm run start:dev
+Puede administrar servicios, barberos, horarios y visualizar turnos.
 
-# production mode
-$ npm run start:prod
-```
+### BARBER
 
-## Run tests
+Representa a un barbero dentro del sistema.
 
-```bash
-# unit tests
-$ npm run test
+### CLIENT
 
-# e2e tests
-$ npm run test:e2e
+Puede consultar disponibilidad, reservar turnos y ver sus reservas.
 
-# test coverage
-$ npm run test:cov
-```
+## Endpoints principales
 
-## Deployment
+### Auth
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- `POST /v1/auth/register`
+- `POST /v1/auth/login`
+- `GET /v1/auth/me`
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Services
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+- `GET /v1/services`
+- `GET /v1/services/:id`
+- `POST /v1/services`
+- `PATCH /v1/services/:id`
+- `DELETE /v1/services/:id`
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Barbers
 
-## Resources
+- `GET /v1/barbers`
+- `GET /v1/barbers/:id`
+- `POST /v1/barbers`
+- `PATCH /v1/barbers/:id`
+- `DELETE /v1/barbers/:id`
+- `POST /v1/barbers/:id/services`
 
-Check out a few resources that may come in handy when working with NestJS:
+### Working Hours
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+- `GET /v1/working-hours/barber/:barberId`
+- `POST /v1/working-hours`
+- `PATCH /v1/working-hours/:id`
+- `DELETE /v1/working-hours/:id`
 
-## Support
+### Availability
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+- `GET /v1/availability`
 
-## Stay in touch
+### Appointments
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- `POST /v1/appointments`
+- `GET /v1/appointments/my`
+- `GET /v1/appointments`
+- `PATCH /v1/appointments/:id/cancel`
 
-## License
+## Motor de disponibilidad
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+La API calcula horarios disponibles teniendo en cuenta:
+
+- Horarios laborales del barbero.
+- Servicio seleccionado.
+- Duración del servicio.
+- Tiempo de buffer entre turnos.
+- Turnos ya reservados.
+- Turnos cancelados.
+- Evita superposición de reservas.
+
+Ejemplo:
+
+Un servicio de 50 minutos con 10 minutos de buffer genera turnos cada 60 minutos.
+
+## Seguridad
+
+- Contraseñas encriptadas con bcrypt.
+- Autenticación mediante JWT.
+- Rutas protegidas con guards.
+- Validación de roles.
+- Validación de datos con class-validator.
+- Variables sensibles protegidas mediante `.env`.
+
+## Documentación Swagger
+
+Una vez iniciado el servidor, la documentación está disponible en:
+
+```text
+http://localhost:3000/api/docs
