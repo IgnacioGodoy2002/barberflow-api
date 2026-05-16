@@ -9,6 +9,7 @@ import { UsersModule } from './users/users.module';
 import { WorkingHoursModule } from './working-hours/working-hours.module';
 import { AvailabilityModule } from './availability/availability.module';
 import { AppointmentsModule } from './appointments/appointments.module';
+import { ScheduleBlocksModule } from './schedule-blocks/schedule-blocks.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AppointmentsModule } from './appointments/appointments.module';
     WorkingHoursModule,
     AvailabilityModule,
     AppointmentsModule,
+    ScheduleBlocksModule,
   ],
   controllers: [],
   providers: [],

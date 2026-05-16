@@ -71,7 +71,18 @@ export class AvailabilityService {
       include: {
         service: true,
       },
-    });
+    });const scheduleBlocks = await this.prisma.scheduleBlock.findMany({
+  where: {
+    barberId: query.barberId,
+    isActive: true,
+    startAt: {
+      lte: endOfDay,
+    },
+    endAt: {
+      gte: startOfDay,
+    },
+  },
+});
 
     const activeAppointments = appointments.filter(
       (appointment) =>
@@ -112,10 +123,13 @@ export class AvailabilityService {
             slotBlockedEnd > appointmentStart
           );
         });
+        const hasScheduleBlockConflict = scheduleBlocks.some((block) => {
+  return slotStart < block.endAt && slotBlockedEnd > block.startAt;
+});
 
         const isPastSlot = slotStart.getTime() <= new Date().getTime();
 
-        if (!hasConflict && !isPastSlot) {
+        if (!hasConflict && !hasScheduleBlockConflict && !isPastSlot) {
           slots.push({
             startAt: slotStart,
             endAt: slotEnd,

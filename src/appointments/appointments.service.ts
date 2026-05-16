@@ -65,13 +65,15 @@ export class AppointmentsService {
       service.durationMinutes + service.bufferMinutes,
     );
 
-    await this.validateInsideWorkingHours(dto.barberId, startAt, endAt);
+  await this.validateInsideWorkingHours(dto.barberId, startAt, endAt);
 
-    await this.validateNoAppointmentConflict({
-      barberId: dto.barberId,
-      startAt,
-      blockedEndAt,
-    });
+await this.validateNoScheduleBlockConflict(dto.barberId, startAt, blockedEndAt);
+
+await this.validateNoAppointmentConflict({
+  barberId: dto.barberId,
+  startAt,
+  blockedEndAt,
+});
 
     return this.prisma.appointment.create({
       data: {
@@ -165,7 +167,30 @@ export class AppointmentsService {
       );
     }
   }
+private async validateNoScheduleBlockConflict(
+  barberId: string,
+  startAt: Date,
+  blockedEndAt: Date,
+) {
+  const blocks = await this.prisma.scheduleBlock.findMany({
+    where: {
+      barberId,
+      isActive: true,
+      startAt: {
+        lt: blockedEndAt,
+      },
+      endAt: {
+        gt: startAt,
+      },
+    },
+  });
 
+  if (blocks.length > 0) {
+    throw new BadRequestException(
+      'El horario seleccionado está bloqueado en la agenda del barbero',
+    );
+  }
+}
   private async validateNoAppointmentConflict(params: {
     barberId: string;
     startAt: Date;
