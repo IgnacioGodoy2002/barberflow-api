@@ -16,7 +16,7 @@ https://barberflow-api-9feo.onrender.com/api/docs
 
 Frontend conectado:
 
-https://barberflow-a0u8cix0l-ignaciogodoy2002s-projects.vercel.app/
+https://barberflow-web-six.vercel.app/
 
 Repositorio frontend:
 
