@@ -1,135 +1,267 @@
-# BarberFlow API
+¿# BarberFlow API
 
-API REST para gestión inteligente de turnos de barbería.
+API REST profesional para BarberFlow, un sistema inteligente de turnos para barbería.
 
-Este proyecto conecta mi experiencia real como barbero con mi formación en desarrollo backend. El objetivo es construir una plataforma moderna para administrar clientes, barberos, servicios, horarios disponibles, reservas, cancelaciones y disponibilidad dinámica.
+Este backend permite gestionar usuarios, autenticación, roles, barberos, servicios, horarios laborales, disponibilidad dinámica, reservas, cancelaciones y bloqueos de agenda.
 
-## Deploy
+## API online
 
-API online:
+Backend:
 
 https://barberflow-api-9feo.onrender.com
 
-Swagger online:
+Swagger:
 
 https://barberflow-api-9feo.onrender.com/api/docs
 
-Health check:
+Frontend conectado:
 
-https://barberflow-api-9feo.onrender.com/v1/health
-## Tecnologías utilizadas
+https://barberflow-a0u8cix0l-ignaciogodoy2002s-projects.vercel.app/
 
-- Node.js
-- TypeScript
-- NestJS
-- PostgreSQL
-- Prisma ORM
-- JWT Authentication
-- Role Based Access Control
-- Swagger
-- Neon PostgreSQL
-- Git / GitHub
+Repositorio frontend:
+
+https://github.com/IgnacioGodoy2002/barberflow-web
 
 ## Funcionalidades principales
 
-- Registro e inicio de sesión de usuarios.
 - Autenticación con JWT.
+- Registro e inicio de sesión de usuarios.
 - Roles de usuario: ADMIN, BARBER y CLIENT.
 - Gestión de servicios de barbería.
-- Gestión de perfiles de barberos.
+- Gestión de barberos.
 - Asignación de servicios a barberos.
-- Gestión de horarios laborales por barbero.
-- Motor de disponibilidad dinámica.
-- Creación de reservas de turnos.
+- Configuración de horarios laborales.
+- Consulta de disponibilidad por barbero, servicio y fecha.
+- Creación de turnos.
+- Consulta de turnos propios.
+- Consulta general de turnos para administración.
 - Cancelación de turnos.
-- Validación de conflictos para evitar doble reserva.
+- Bloqueos de agenda.
+- Validación de conflictos de horarios.
+- Validación de turnos en el pasado.
 - Documentación interactiva con Swagger.
+- Deploy online en Render.
+- Base de datos PostgreSQL en Neon.
 
-## Roles del sistema
+## Tecnologías utilizadas
 
-### ADMIN
+- NestJS
+- TypeScript
+- PostgreSQL
+- Prisma
+- JWT
+- Passport
+- bcrypt
+- Swagger
+- Render
+- Neon
+- Node.js
 
-Puede administrar servicios, barberos, horarios y visualizar turnos.
+## Arquitectura general
 
-### BARBER
+El proyecto está organizado por módulos principales:
 
-Representa a un barbero dentro del sistema.
-
-### CLIENT
-
-Puede consultar disponibilidad, reservar turnos y ver sus reservas.
+```text
+src/
+├── auth/
+├── users/
+├── barbers/
+├── services/
+├── working-hours/
+├── availability/
+├── appointments/
+├── schedule-blocks/
+├── prisma/
+├── common/
+├── app.module.ts
+└── main.ts
+```
 
 ## Endpoints principales
 
 ### Auth
 
-- `POST /v1/auth/register`
-- `POST /v1/auth/login`
-- `GET /v1/auth/me`
+```text
+POST /v1/auth/register
+POST /v1/auth/login
+GET  /v1/auth/me
+```
 
 ### Services
 
-- `GET /v1/services`
-- `GET /v1/services/:id`
-- `POST /v1/services`
-- `PATCH /v1/services/:id`
-- `DELETE /v1/services/:id`
+```text
+GET    /v1/services
+GET    /v1/services/:id
+POST   /v1/services
+PATCH  /v1/services/:id
+DELETE /v1/services/:id
+```
 
 ### Barbers
 
-- `GET /v1/barbers`
-- `GET /v1/barbers/:id`
-- `POST /v1/barbers`
-- `PATCH /v1/barbers/:id`
-- `DELETE /v1/barbers/:id`
-- `POST /v1/barbers/:id/services`
+```text
+GET    /v1/barbers
+GET    /v1/barbers/:id
+POST   /v1/barbers
+PATCH  /v1/barbers/:id
+DELETE /v1/barbers/:id
+POST   /v1/barbers/:id/services
+```
 
 ### Working Hours
 
-- `GET /v1/working-hours/barber/:barberId`
-- `POST /v1/working-hours`
-- `PATCH /v1/working-hours/:id`
-- `DELETE /v1/working-hours/:id`
+```text
+GET    /v1/working-hours/barber/:barberId
+POST   /v1/working-hours
+PATCH  /v1/working-hours/:id
+DELETE /v1/working-hours/:id
+```
 
 ### Availability
 
-- `GET /v1/availability`
+```text
+GET /v1/availability?barberId=&serviceId=&date=
+```
 
 ### Appointments
 
-- `POST /v1/appointments`
-- `GET /v1/appointments/my`
-- `GET /v1/appointments`
-- `PATCH /v1/appointments/:id/cancel`
+```text
+POST  /v1/appointments
+GET   /v1/appointments/my
+GET   /v1/appointments
+PATCH /v1/appointments/:id/cancel
+```
 
-## Motor de disponibilidad
-
-La API calcula horarios disponibles teniendo en cuenta:
-
-- Horarios laborales del barbero.
-- Servicio seleccionado.
-- Duración del servicio.
-- Tiempo de buffer entre turnos.
-- Turnos ya reservados.
-- Turnos cancelados.
-- Evita superposición de reservas.
-
-Ejemplo:
-
-Un servicio de 50 minutos con 10 minutos de buffer genera turnos cada 60 minutos.
-
-## Seguridad
-
-- Contraseñas encriptadas con bcrypt.
-- Autenticación mediante JWT.
-- Rutas protegidas con guards.
-- Validación de roles.
-- Validación de datos con class-validator.
-- Variables sensibles protegidas mediante `.env`.
-
-## Documentación Swagger
-
-Una vez iniciado el servidor, la documentación está disponible en:
+### Schedule Blocks
 
 ```text
-http://localhost:3000/api/docs
+POST   /v1/schedule-blocks
+GET    /v1/schedule-blocks/barber/:barberId
+DELETE /v1/schedule-blocks/:id
+```
+
+### Health
+
+```text
+GET /v1/health
+GET /v1/health/db
+```
+
+## Variables de entorno
+
+Crear un archivo `.env` en base a `.env.example`:
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST/DATABASE?sslmode=require"
+JWT_SECRET="your-secret-key"
+JWT_EXPIRES_IN="1d"
+```
+
+## Instalación local
+
+```bash
+npm install
+```
+
+En Windows PowerShell, si aparece un error de ejecución de scripts, usar:
+
+```bash
+npm.cmd install
+```
+
+## Prisma
+
+Generar cliente de Prisma:
+
+```bash
+npx prisma generate
+```
+
+En Windows PowerShell:
+
+```bash
+npx.cmd prisma generate
+```
+
+Ejecutar migraciones:
+
+```bash
+npx prisma migrate dev
+```
+
+En Windows PowerShell:
+
+```bash
+npx.cmd prisma migrate dev
+```
+
+## Ejecutar en desarrollo
+
+```bash
+npm run start:dev
+```
+
+En Windows PowerShell:
+
+```bash
+npm.cmd run start:dev
+```
+
+## Build de producción
+
+```bash
+npm run build
+```
+
+En Windows PowerShell:
+
+```bash
+npm.cmd run build
+```
+
+## Deploy
+
+El backend está desplegado en Render.
+
+Configuración utilizada:
+
+```text
+Build Command:
+npm install && npx prisma generate && npm run build
+
+Start Command:
+npm run start:prod
+```
+
+Variables configuradas en Render:
+
+```text
+DATABASE_URL
+JWT_SECRET
+JWT_EXPIRES_IN
+NODE_VERSION
+```
+
+## Usuario de prueba
+
+Cliente:
+
+```text
+Email: ignacio@test.com
+Password: 123456
+```
+
+Administrador:
+
+```text
+Email: admin@barberflow.com
+Password: 123456
+```
+
+## Autor
+
+Ignacio Gabriel Godoy
+
+Desarrollador Backend Jr.
+
+Proyecto personal desarrollado conectando experiencia real en barbería con desarrollo backend y frontend fullstack.
