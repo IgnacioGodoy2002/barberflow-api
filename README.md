@@ -1,4 +1,4 @@
-¿# BarberFlow API
+# BarberFlow API
 
 API REST profesional para BarberFlow, un sistema inteligente de turnos para barbería.
 
@@ -242,21 +242,12 @@ JWT_EXPIRES_IN
 NODE_VERSION
 ```
 
-## Usuario de prueba
+## Demo
 
-Cliente:
+El sistema cuenta con frontend online conectado a esta API.  
+La documentación interactiva está disponible en Swagger.
 
-```text
-Email: ignacio@test.com
-Password: 123456
-```
-
-Administrador:
-
-```text
-Email: admin@barberflow.com
-Password: 123456
-```
+> Nota: al estar desplegado en Render Free, la primera carga puede demorar unos segundos si el servicio estaba inactivo.
 
 ## Autor
 
