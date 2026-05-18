@@ -16,11 +16,21 @@ import { AssignServicesDto } from './dto/assign-services.dto';
 import { CreateBarberDto } from './dto/create-barber.dto';
 import { UpdateBarberDto } from './dto/update-barber.dto';
 import { BarbersService } from './barbers.service';
+import { CreateBarberAdminDto } from './dto/create-barber-admin.dto';
 
 @ApiTags('Barbers')
 @Controller('barbers')
 export class BarbersController {
   constructor(private readonly barbersService: BarbersService) {}
+
+  @Post('admin/create')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
+@ApiBearerAuth()
+@ApiOperation({ summary: 'Crear usuario barbero y perfil de barbero desde admin' })
+createFromAdmin(@Body() dto: CreateBarberAdminDto) {
+  return this.barbersService.createFromAdmin(dto);
+}
 
   @Get()
   @ApiOperation({ summary: 'Listar barberos activos' })
