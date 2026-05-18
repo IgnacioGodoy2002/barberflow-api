@@ -3,14 +3,51 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { CreateBarberAdminDto } from './dto/create-barber-admin.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AssignServicesDto } from './dto/assign-services.dto';
 import { CreateBarberDto } from './dto/create-barber.dto';
 import { UpdateBarberDto } from './dto/update-barber.dto';
 
+
 @Injectable()
 export class BarbersService {
   constructor(private readonly prisma: PrismaService) {}
+
+    async createFromAdmin(dto: CreateBarberAdminDto) {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (existingUser) {
+      throw new BadRequestException('Ya existe un usuario con ese email');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          fullName: dto.fullName,
+          email: dto.email,
+          password: passwordHash,
+          role: 'BARBER',
+        },
+      });
+
+      const barber = await tx.barber.create({
+        data: {
+          userId: user.id,
+          displayName: dto.displayName,
+          bio: dto.bio,
+        },
+        include: this.defaultInclude(),
+      });
+
+      return barber;
+    });
+  }
 
   async create(dto: CreateBarberDto) {
     const user = await this.prisma.user.findUnique({

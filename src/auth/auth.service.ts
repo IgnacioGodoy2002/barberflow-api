@@ -19,7 +19,9 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    const existingUser = await this.usersService.findByEmail(dto.email);
+    const existingUser = await this.usersService.findByEmail(
+      dto.email.toLowerCase(),
+    );
 
     if (existingUser) {
       throw new BadRequestException('Ya existe un usuario con ese email');
