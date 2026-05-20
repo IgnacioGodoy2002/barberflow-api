@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CancelAppointmentDto } from './dto/cancel-appointment.dto';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 
 type AuthUser = {
   id: string;
@@ -56,7 +57,9 @@ export class AppointmentsService {
     }
 
     if (startAt.getTime() <= new Date().getTime()) {
-      throw new BadRequestException('No se puede reservar un turno en el pasado');
+      throw new BadRequestException(
+        'No se puede reservar un turno en el pasado',
+      );
     }
 
     const endAt = this.addMinutes(startAt, service.durationMinutes);
@@ -65,15 +68,19 @@ export class AppointmentsService {
       service.durationMinutes + service.bufferMinutes,
     );
 
-  await this.validateInsideWorkingHours(dto.barberId, startAt, endAt);
+    await this.validateInsideWorkingHours(dto.barberId, startAt, endAt);
 
-await this.validateNoScheduleBlockConflict(dto.barberId, startAt, blockedEndAt);
+    await this.validateNoScheduleBlockConflict(
+      dto.barberId,
+      startAt,
+      blockedEndAt,
+    );
 
-await this.validateNoAppointmentConflict({
-  barberId: dto.barberId,
-  startAt,
-  blockedEndAt,
-});
+    await this.validateNoAppointmentConflict({
+      barberId: dto.barberId,
+      startAt,
+      blockedEndAt,
+    });
 
     return this.prisma.appointment.create({
       data: {
@@ -107,6 +114,106 @@ await this.validateNoAppointmentConflict({
       orderBy: {
         startAt: 'asc',
       },
+    });
+  }
+
+  async update(id: string, dto: UpdateAppointmentDto) {
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id },
+      include: {
+        service: true,
+        barber: {
+          include: {
+            services: true,
+          },
+        },
+      },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Turno no encontrado');
+    }
+
+    if (appointment.status === 'CANCELLED') {
+      throw new BadRequestException('No se puede editar un turno cancelado');
+    }
+
+    const nextBarberId = dto.barberId ?? appointment.barberId;
+    const nextServiceId = dto.serviceId ?? appointment.serviceId;
+    const nextStartAt = dto.startAt
+      ? new Date(dto.startAt)
+      : appointment.startAt;
+
+    if (Number.isNaN(nextStartAt.getTime())) {
+      throw new BadRequestException('Fecha inválida');
+    }
+
+    if (nextStartAt.getTime() <= new Date().getTime()) {
+      throw new BadRequestException(
+        'No se puede mover un turno a una fecha pasada',
+      );
+    }
+
+    const service = await this.prisma.service.findUnique({
+      where: { id: nextServiceId },
+    });
+
+    if (!service || !service.isActive) {
+      throw new NotFoundException('Servicio no encontrado');
+    }
+
+    const barber = await this.prisma.barber.findUnique({
+      where: { id: nextBarberId },
+      include: {
+        services: true,
+      },
+    });
+
+    if (!barber || !barber.isActive) {
+      throw new NotFoundException('Barbero no encontrado');
+    }
+
+    const barberCanDoService = barber.services.some(
+      (barberService) => barberService.serviceId === nextServiceId,
+    );
+
+    if (!barberCanDoService) {
+      throw new BadRequestException(
+        'El barbero no tiene asignado este servicio',
+      );
+    }
+
+    const nextEndAt = this.addMinutes(nextStartAt, service.durationMinutes);
+    const blockedEndAt = this.addMinutes(
+      nextStartAt,
+      service.durationMinutes + service.bufferMinutes,
+    );
+
+    await this.validateInsideWorkingHours(nextBarberId, nextStartAt, nextEndAt);
+
+    await this.validateNoScheduleBlockConflict(
+      nextBarberId,
+      nextStartAt,
+      blockedEndAt,
+    );
+
+    await this.validateNoAppointmentConflict({
+      barberId: nextBarberId,
+      startAt: nextStartAt,
+      blockedEndAt,
+      appointmentIdToIgnore: id,
+    });
+
+    return this.prisma.appointment.update({
+      where: { id },
+      data: {
+        barberId: nextBarberId,
+        serviceId: nextServiceId,
+        startAt: nextStartAt,
+        endAt: nextEndAt,
+        notes: dto.notes ?? appointment.notes,
+      },
+      include: this.defaultInclude(),
     });
   }
 
@@ -167,37 +274,47 @@ await this.validateNoAppointmentConflict({
       );
     }
   }
-private async validateNoScheduleBlockConflict(
-  barberId: string,
-  startAt: Date,
-  blockedEndAt: Date,
-) {
-  const blocks = await this.prisma.scheduleBlock.findMany({
-    where: {
-      barberId,
-      isActive: true,
-      startAt: {
-        lt: blockedEndAt,
-      },
-      endAt: {
-        gt: startAt,
-      },
-    },
-  });
 
-  if (blocks.length > 0) {
-    throw new BadRequestException(
-      'El horario seleccionado está bloqueado en la agenda del barbero',
-    );
+  private async validateNoScheduleBlockConflict(
+    barberId: string,
+    startAt: Date,
+    blockedEndAt: Date,
+  ) {
+    const blocks = await this.prisma.scheduleBlock.findMany({
+      where: {
+        barberId,
+        isActive: true,
+        startAt: {
+          lt: blockedEndAt,
+        },
+        endAt: {
+          gt: startAt,
+        },
+      },
+    });
+
+    if (blocks.length > 0) {
+      throw new BadRequestException(
+        'El horario seleccionado está bloqueado en la agenda del barbero',
+      );
+    }
   }
-}
+
   private async validateNoAppointmentConflict(params: {
     barberId: string;
     startAt: Date;
     blockedEndAt: Date;
+    appointmentIdToIgnore?: string;
   }) {
     const existingAppointments = await this.prisma.appointment.findMany({
       where: {
+        ...(params.appointmentIdToIgnore
+          ? {
+              id: {
+                not: params.appointmentIdToIgnore,
+              },
+            }
+          : {}),
         barberId: params.barberId,
         status: {
           notIn: ['CANCELLED', 'NO_SHOW'],
@@ -214,20 +331,22 @@ private async validateNoScheduleBlockConflict(
       },
     });
 
-    const hasConflict = existingAppointments.some((appointment) => {
+    const hasConflict = existingAppointments.some((existingAppointment) => {
       const appointmentBlockedEnd = this.addMinutes(
-        appointment.endAt,
-        appointment.service.bufferMinutes,
+        existingAppointment.endAt,
+        existingAppointment.service.bufferMinutes,
       );
 
       return (
         params.startAt < appointmentBlockedEnd &&
-        params.blockedEndAt > appointment.startAt
+        params.blockedEndAt > existingAppointment.startAt
       );
     });
 
     if (hasConflict) {
-      throw new BadRequestException('El horario seleccionado ya no está disponible');
+      throw new BadRequestException(
+        'El horario seleccionado ya no está disponible',
+      );
     }
   }
 

@@ -15,6 +15,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { AppointmentsService } from './appointments.service';
 import { CancelAppointmentDto } from './dto/cancel-appointment.dto';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 
 @ApiTags('Appointments')
 @Controller('appointments')
@@ -41,6 +42,14 @@ export class AppointmentsController {
   @ApiOperation({ summary: 'Listar todos los turnos' })
   findAll() {
     return this.appointmentsService.findAll();
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Editar un turno' })
+  update(@Param('id') id: string, @Body() dto: UpdateAppointmentDto) {
+    return this.appointmentsService.update(id, dto);
   }
 
   @Patch(':id/cancel')
