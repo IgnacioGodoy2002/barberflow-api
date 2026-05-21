@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CancelAppointmentDto } from './dto/cancel-appointment.dto';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
+import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
 
 type AuthUser = {
   id: string;
@@ -212,6 +213,30 @@ export class AppointmentsService {
         startAt: nextStartAt,
         endAt: nextEndAt,
         notes: dto.notes ?? appointment.notes,
+      },
+      include: this.defaultInclude(),
+    });
+  }
+
+  async updateStatus(id: string, dto: UpdateAppointmentStatusDto) {
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException('Turno no encontrado');
+    }
+
+    if (appointment.status === 'CANCELLED') {
+      throw new BadRequestException(
+        'No se puede cambiar el estado de un turno cancelado',
+      );
+    }
+
+    return this.prisma.appointment.update({
+      where: { id },
+      data: {
+        status: dto.status,
       },
       include: this.defaultInclude(),
     });

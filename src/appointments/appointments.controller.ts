@@ -16,6 +16,7 @@ import { AppointmentsService } from './appointments.service';
 import { CancelAppointmentDto } from './dto/cancel-appointment.dto';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
+import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
 
 @ApiTags('Appointments')
 @Controller('appointments')
@@ -50,6 +51,17 @@ export class AppointmentsController {
   @ApiOperation({ summary: 'Editar un turno' })
   update(@Param('id') id: string, @Body() dto: UpdateAppointmentDto) {
     return this.appointmentsService.update(id, dto);
+  }
+
+  @Patch(':id/status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'BARBER')
+  @ApiOperation({ summary: 'Actualizar estado de un turno' })
+  updateStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateAppointmentStatusDto,
+  ) {
+    return this.appointmentsService.updateStatus(id, dto);
   }
 
   @Patch(':id/cancel')
