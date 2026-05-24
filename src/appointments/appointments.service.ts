@@ -8,6 +8,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CancelAppointmentDto } from './dto/cancel-appointment.dto';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
+import { randomUUID } from 'crypto';
+import { CreateAdminAppointmentDto } from './dto/create-admin-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
 
 type AuthUser = {
@@ -92,6 +94,117 @@ export class AppointmentsService {
         endAt,
         status: 'CONFIRMED',
         notes: dto.notes,
+      },
+      include: this.defaultInclude(),
+    });
+  }
+
+    async createFromAdmin(dto: CreateAdminAppointmentDto) {
+    const cleanFullName = dto.clientFullName.trim();
+    const cleanEmail = dto.clientEmail.trim().toLowerCase();
+    const cleanPhone = dto.clientPhone?.trim() || null;
+
+    if (!cleanFullName) {
+      throw new BadRequestException('El nombre del cliente es obligatorio');
+    }
+
+    const service = await this.prisma.service.findUnique({
+      where: { id: dto.serviceId },
+    });
+
+    if (!service || !service.isActive) {
+      throw new NotFoundException('Servicio no encontrado');
+    }
+
+    const barber = await this.prisma.barber.findUnique({
+      where: { id: dto.barberId },
+      include: {
+        services: true,
+      },
+    });
+
+    if (!barber || !barber.isActive) {
+      throw new NotFoundException('Barbero no encontrado');
+    }
+
+    const barberCanDoService = barber.services.some(
+      (barberService) => barberService.serviceId === dto.serviceId,
+    );
+
+    if (!barberCanDoService) {
+      throw new BadRequestException(
+        'El barbero no tiene asignado este servicio',
+      );
+    }
+
+    const startAt = new Date(dto.startAt);
+
+    if (Number.isNaN(startAt.getTime())) {
+      throw new BadRequestException('Fecha inválida');
+    }
+
+    if (startAt.getTime() <= new Date().getTime()) {
+      throw new BadRequestException(
+        'No se puede reservar un turno en el pasado',
+      );
+    }
+
+    const endAt = this.addMinutes(startAt, service.durationMinutes);
+    const blockedEndAt = this.addMinutes(
+      startAt,
+      service.durationMinutes + service.bufferMinutes,
+    );
+
+    await this.validateInsideWorkingHours(dto.barberId, startAt, endAt);
+
+    await this.validateNoScheduleBlockConflict(
+      dto.barberId,
+      startAt,
+      blockedEndAt,
+    );
+
+    await this.validateNoAppointmentConflict({
+      barberId: dto.barberId,
+      startAt,
+      blockedEndAt,
+    });
+
+    const existingClient = await this.prisma.user.findUnique({
+      where: {
+        email: cleanEmail,
+      },
+    });
+
+    const client = existingClient
+      ? await this.prisma.user.update({
+          where: {
+            id: existingClient.id,
+          },
+          data: {
+            fullName: cleanFullName,
+            phone: cleanPhone ?? existingClient.phone,
+          },
+        })
+      : await this.prisma.user.create({
+          data: {
+            fullName: cleanFullName,
+            email: cleanEmail,
+            phone: cleanPhone,
+            password: `manual-client-${randomUUID()}`,
+            role: 'CLIENT',
+            isActive: true,
+          },
+        });
+
+    return this.prisma.appointment.create({
+      data: {
+        clientId: client.id,
+        barberId: dto.barberId,
+        serviceId: dto.serviceId,
+        startAt,
+        endAt,
+        status: 'CONFIRMED',
+        notes: dto.notes || 'Turno creado manualmente desde admin',
       },
       include: this.defaultInclude(),
     });

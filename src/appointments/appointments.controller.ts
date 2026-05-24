@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { AppointmentsService } from './appointments.service';
 import { CancelAppointmentDto } from './dto/cancel-appointment.dto';
+import { CreateAdminAppointmentDto } from './dto/create-admin-appointment.dto';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
@@ -29,6 +30,14 @@ export class AppointmentsController {
   @ApiOperation({ summary: 'Crear una reserva de turno' })
   create(@Body() dto: CreateAppointmentDto, @CurrentUser() user: any) {
     return this.appointmentsService.create(dto, user);
+  }
+
+  @Post('admin/create')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Crear una reserva manual desde admin' })
+  createFromAdmin(@Body() dto: CreateAdminAppointmentDto) {
+    return this.appointmentsService.createFromAdmin(dto);
   }
 
   @Get('my')

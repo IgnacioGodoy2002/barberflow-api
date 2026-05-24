@@ -6,20 +6,20 @@ export class CreateAppointmentDto {
     example: 'id-del-barbero',
   })
   @IsUUID()
-  barberId: string;
+  barberId!: string;
 
   @ApiProperty({
     example: 'id-del-servicio',
   })
   @IsUUID()
-  serviceId: string;
+  serviceId!: string;
 
   @ApiProperty({
     example: '2026-05-18T09:00:00',
     description: 'Fecha y hora de inicio del turno',
   })
   @IsDateString()
-  startAt: string;
+  startAt!: string;
 
   @ApiPropertyOptional({
     example: 'Cliente quiere corte clásico con barba prolija.',
