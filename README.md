@@ -92,11 +92,12 @@ Ver [`.env.example`](.env.example). Las únicas obligatorias son `DATABASE_URL` 
 ## Deploy (Render)
 
 ```text
-Build Command:  npm install && npx prisma generate && npm run build && npx prisma migrate deploy
+Build Command:  npm install --include=dev && npx prisma generate && npm run build && npx prisma migrate deploy
 Start Command:  npm run start:prod
 ```
 
-`prisma migrate deploy` aplica las migraciones pendientes antes de arrancar la versión nueva.
+- `--include=dev` hace falta porque con `NODE_ENV=production` npm no instala las herramientas de build (Nest CLI, Prisma).
+- `prisma migrate deploy` aplica las migraciones pendientes antes de arrancar la versión nueva.
 
 ## Endpoints principales
 
