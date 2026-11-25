@@ -5,7 +5,11 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AvailabilityQueryDto } from './dto/availability-query.dto';
-import { toLocalTimeString } from '../common/timezone';
+import {
+  businessDateTime,
+  dayOfWeekOf,
+  toLocalTimeString,
+} from '../common/timezone';
 
 @Injectable()
 export class AvailabilityService {
@@ -41,14 +45,14 @@ export class AvailabilityService {
       );
     }
 
-    const requestedDate = this.parseDate(query.date);
-    const dayOfWeek = requestedDate.getDay();
+    this.validateDate(query.date);
+    const dayOfWeek = dayOfWeekOf(query.date);
 
-    const startOfDay = new Date(requestedDate);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(requestedDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    // Límites del día en hora de Argentina, sin depender del huso del servidor.
+    const startOfDay = businessDateTime(query.date, '00:00');
+    const endOfDay = new Date(
+      businessDateTime(query.date, '23:59').getTime() + 59_999,
+    );
 
     const workingHours = await this.prisma.workingHour.findMany({
       where: {
@@ -160,23 +164,17 @@ export class AvailabilityService {
     };
   }
 
-  private parseDate(date: string) {
-    const parsedDate = new Date(`${date}T00:00:00`);
-
-    if (Number.isNaN(parsedDate.getTime())) {
+  private validateDate(date: string) {
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+      Number.isNaN(businessDateTime(date, '00:00').getTime())
+    ) {
       throw new BadRequestException('Fecha inválida');
     }
-
-    return parsedDate;
   }
 
   private buildDateTime(date: string, time: string) {
-    const [hours, minutes] = time.split(':').map(Number);
-    const result = new Date(`${date}T00:00:00`);
-
-    result.setHours(hours, minutes, 0, 0);
-
-    return result;
+    return businessDateTime(date, time);
   }
 
   private addMinutes(date: Date, minutes: number) {
