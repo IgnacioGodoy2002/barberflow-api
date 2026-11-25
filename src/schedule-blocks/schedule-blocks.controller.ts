@@ -1,3 +1,4 @@
+import type { AuthUser } from '../common/auth-user';
 import {
   Body,
   Controller,
@@ -25,19 +26,22 @@ export class ScheduleBlocksController {
 
   @Post()
   @ApiOperation({ summary: 'Crear bloqueo de agenda para un barbero' })
-  create(@Body() dto: CreateScheduleBlockDto, @CurrentUser() user: any) {
+  create(@Body() dto: CreateScheduleBlockDto, @CurrentUser() user: AuthUser) {
     return this.scheduleBlocksService.create(dto, user);
   }
 
   @Get('barber/:barberId')
   @ApiOperation({ summary: 'Listar bloqueos activos de un barbero' })
-  findByBarber(@Param('barberId') barberId: string, @CurrentUser() user: any) {
+  findByBarber(
+    @Param('barberId') barberId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
     return this.scheduleBlocksService.findByBarber(barberId, user);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Desactivar bloqueo de agenda' })
-  remove(@Param('id') id: string, @CurrentUser() user: any) {
+  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.scheduleBlocksService.remove(id, user);
   }
 }

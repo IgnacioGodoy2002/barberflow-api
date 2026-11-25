@@ -1,0 +1,40 @@
+# Levanta la base de datos y la API con un solo comando:
+#   docker compose up --build
+# API:     http://localhost:3000/v1/health
+# Swagger: http://localhost:3000/api/docs
+# Para cargar datos de ejemplo: docker compose exec api node dist/prisma/seed.js
+#   (o desde tu máquina: npm run db:seed con DATABASE_URL apuntando a localhost:5432)
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: barber
+      POSTGRES_PASSWORD: barber
+      POSTGRES_DB: barberflow
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U barber']
+      interval: 5s
+      retries: 10
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://barber:barber@db:5432/barberflow
+      JWT_SECRET: dev-secret-cambiar
+      NODE_ENV: development
+      DEMO_MODE: 'true'
+      WEB_URL: http://localhost:5173/
+      API_PUBLIC_URL: http://localhost:3000
+    ports:
+      - '3000:3000'
+
+volumes:
+  pgdata:

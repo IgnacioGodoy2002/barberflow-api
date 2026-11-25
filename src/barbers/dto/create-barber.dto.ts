@@ -15,7 +15,8 @@ export class CreateBarberDto {
   displayName: string;
 
   @ApiPropertyOptional({
-    example: 'Barbero y colorista especializado en cortes modernos, barba y color.',
+    example:
+      'Barbero y colorista especializado en cortes modernos, barba y color.',
   })
   @IsOptional()
   @IsString()

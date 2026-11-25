@@ -24,13 +24,15 @@ export class BarbersController {
   constructor(private readonly barbersService: BarbersService) {}
 
   @Post('admin/create')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN')
-@ApiBearerAuth()
-@ApiOperation({ summary: 'Crear usuario barbero y perfil de barbero desde admin' })
-createFromAdmin(@Body() dto: CreateBarberAdminDto) {
-  return this.barbersService.createFromAdmin(dto);
-}
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Crear usuario barbero y perfil de barbero desde admin',
+  })
+  createFromAdmin(@Body() dto: CreateBarberAdminDto) {
+    return this.barbersService.createFromAdmin(dto);
+  }
 
   @Get()
   @ApiOperation({ summary: 'Listar barberos activos' })

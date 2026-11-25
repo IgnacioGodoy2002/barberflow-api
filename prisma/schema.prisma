@@ -30,11 +30,14 @@ model User {
   phone     String?
   role      Role     @default(CLIENT)
   isActive  Boolean  @default(true)
+  /// Cuenta pública del "modo demo": solo lectura y con datos de clientes ocultos.
+  isDemo    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  barber       Barber?
-  appointments Appointment[]
+  barber        Barber?
+  appointments  Appointment[]
+  waitlistItems WaitlistEntry[]
 }
 
 model Barber {
@@ -51,6 +54,7 @@ model Barber {
   workingHours   WorkingHour[]
   appointments   Appointment[]
   scheduleBlocks ScheduleBlock[]
+  waitlistItems  WaitlistEntry[]
 }
 
 model Service {
@@ -64,8 +68,9 @@ model Service {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  barbers      BarberService[]
-  appointments Appointment[]
+  barbers       BarberService[]
+  appointments  Appointment[]
+  waitlistItems WaitlistEntry[]
 }
 
 model BarberService {
@@ -91,24 +96,76 @@ model WorkingHour {
 }
 
 model Appointment {
-  id           String            @id @default(uuid())
-  clientId     String
-  barberId     String
-  serviceId    String
-  startAt      DateTime
-  endAt        DateTime
-  status       AppointmentStatus @default(PENDING)
-  notes        String?
-  cancelReason String?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  id              String            @id @default(uuid())
+  clientId        String
+  barberId        String
+  serviceId       String
+  startAt         DateTime
+  endAt           DateTime
+  status          AppointmentStatus @default(PENDING)
+  notes           String?
+  cancelReason    String?
+  /// Cuándo se mandó el recordatorio por email (null = todavía no).
+  reminderSentAt  DateTime?
+  /// Cantidad de veces que el cliente reprogramó este turno.
+  rescheduleCount Int               @default(0)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
-  client  User    @relation(fields: [clientId], references: [id])
-  barber  Barber  @relation(fields: [barberId], references: [id])
-  service Service @relation(fields: [serviceId], references: [id])
+  client  User     @relation(fields: [clientId], references: [id])
+  barber  Barber   @relation(fields: [barberId], references: [id])
+  service Service  @relation(fields: [serviceId], references: [id])
+  payment Payment?
 
   @@index([barberId, startAt])
   @@index([clientId, startAt])
+  @@index([status, startAt])
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+/// Seña de un turno cobrada con Mercado Pago (Checkout Pro).
+model Payment {
+  id                String        @id @default(uuid())
+  appointmentId     String        @unique
+  amount            Decimal       @db.Decimal(10, 2)
+  status            PaymentStatus @default(PENDING)
+  provider          String        @default("MERCADO_PAGO")
+  preferenceId      String?
+  providerPaymentId String?
+  checkoutUrl       String?
+  expiresAt         DateTime
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([status, expiresAt])
+}
+
+/// Cliente que pidió que le avisen si se libera un turno ese día.
+model WaitlistEntry {
+  id         String    @id @default(uuid())
+  clientId   String
+  serviceId  String
+  /// Barbero preferido. Si es null, le sirve cualquiera.
+  barberId   String?
+  /// Día buscado en formato YYYY-MM-DD (hora de Argentina).
+  date       String
+  notifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  client  User    @relation(fields: [clientId], references: [id])
+  service Service @relation(fields: [serviceId], references: [id])
+  barber  Barber? @relation(fields: [barberId], references: [id])
+
+  @@unique([clientId, serviceId, date, barberId])
+  @@index([date, serviceId])
 }
 
 enum ScheduleBlockType {
