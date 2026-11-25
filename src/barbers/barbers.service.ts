@@ -10,12 +10,11 @@ import { AssignServicesDto } from './dto/assign-services.dto';
 import { CreateBarberDto } from './dto/create-barber.dto';
 import { UpdateBarberDto } from './dto/update-barber.dto';
 
-
 @Injectable()
 export class BarbersService {
   constructor(private readonly prisma: PrismaService) {}
 
-    async createFromAdmin(dto: CreateBarberAdminDto) {
+  async createFromAdmin(dto: CreateBarberAdminDto) {
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });

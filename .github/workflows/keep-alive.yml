@@ -1,0 +1,40 @@
+name: Mantener la API despierta
+
+# Render (plan gratis) duerme el servicio tras 15 minutos sin tráfico y la
+# primera visita tarda hasta un minuto. Este workflow lo "despierta" cada
+# 10 minutos y, de paso, dispara las tareas programadas (recordatorios y
+# vencimiento de señas) con POST /v1/jobs/run.
+#
+# Secrets/variables del repo (Settings → Secrets and variables → Actions):
+#   API_URL      (variable)  https://barberflow-api-9feo.onrender.com
+#   CRON_SECRET  (secret)    el mismo valor que en Render
+#
+# Nota: GitHub pausa los workflows programados si el repo pasa 60 días sin
+# actividad. Si pasa, se reactiva desde la pestaña Actions.
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      API_URL: ${{ vars.API_URL || 'https://barberflow-api-9feo.onrender.com' }}
+    steps:
+      - name: Despertar la API
+        run: |
+          for i in 1 2 3; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 90 "$API_URL/v1/health") && [ "$code" = "200" ] && echo "API online" && exit 0
+            echo "Intento $i: $code"; sleep 10
+          done
+          exit 1
+
+      - name: Correr tareas programadas
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        if: env.CRON_SECRET != ''
+        run: |
+          curl -s --fail --max-time 60 -X POST "$API_URL/v1/jobs/run" -H "x-cron-secret: $CRON_SECRET"

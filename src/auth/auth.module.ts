@@ -6,6 +6,7 @@ import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { resolveJwtSecret } from '../common/jwt-secret';
 
 @Module({
   imports: [
@@ -14,16 +15,16 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret:
-          configService.get<string>('JWT_SECRET') ??
-          'barberflow_super_secret_dev',
+        secret: resolveJwtSecret(configService.get<string>('JWT_SECRET')),
         signOptions: {
-          expiresIn: '1d',
+          expiresIn: (configService.get<string>('JWT_EXPIRES_IN') ??
+            '1d') as '1d',
         },
       }),
     }),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
+  exports: [AuthService],
 })
 export class AuthModule {}

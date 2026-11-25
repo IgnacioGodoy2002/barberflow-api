@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AvailabilityQueryDto } from './dto/availability-query.dto';
+import { toLocalTimeString } from '../common/timezone';
 
 @Injectable()
 export class AvailabilityService {
@@ -71,30 +72,30 @@ export class AvailabilityService {
       include: {
         service: true,
       },
-    });const scheduleBlocks = await this.prisma.scheduleBlock.findMany({
-  where: {
-    barberId: query.barberId,
-    isActive: true,
-    startAt: {
-      lte: endOfDay,
-    },
-    endAt: {
-      gte: startOfDay,
-    },
-  },
-});
+    });
+    const scheduleBlocks = await this.prisma.scheduleBlock.findMany({
+      where: {
+        barberId: query.barberId,
+        isActive: true,
+        startAt: {
+          lte: endOfDay,
+        },
+        endAt: {
+          gte: startOfDay,
+        },
+      },
+    });
 
     const activeAppointments = appointments.filter(
       (appointment) =>
-        appointment.status !== 'CANCELLED' &&
-        appointment.status !== 'NO_SHOW',
+        appointment.status !== 'CANCELLED' && appointment.status !== 'NO_SHOW',
     );
 
     const slots: {
-  startAt: Date;
-  endAt: Date;
-  label: string;
-}[] = [];
+      startAt: Date;
+      endAt: Date;
+      label: string;
+    }[] = [];
 
     for (const workingHour of workingHours) {
       let cursor = this.buildDateTime(query.date, workingHour.startTime);
@@ -124,8 +125,8 @@ export class AvailabilityService {
           );
         });
         const hasScheduleBlockConflict = scheduleBlocks.some((block) => {
-  return slotStart < block.endAt && slotBlockedEnd > block.startAt;
-});
+          return slotStart < block.endAt && slotBlockedEnd > block.startAt;
+        });
 
         const isPastSlot = slotStart.getTime() <= new Date().getTime();
 
@@ -183,10 +184,6 @@ export class AvailabilityService {
   }
 
   private formatTime(date: Date) {
-    return date.toLocaleTimeString('es-AR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
+    return toLocalTimeString(date);
   }
 }

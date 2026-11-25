@@ -18,6 +18,8 @@ import { CreateAdminAppointmentDto } from './dto/create-admin-appointment.dto';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { UpdateAppointmentStatusDto } from './dto/update-appointment-status.dto';
+import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
+import type { AuthUser } from '../common/auth-user';
 
 @ApiTags('Appointments')
 @Controller('appointments')
@@ -28,7 +30,7 @@ export class AppointmentsController {
 
   @Post()
   @ApiOperation({ summary: 'Crear una reserva de turno' })
-  create(@Body() dto: CreateAppointmentDto, @CurrentUser() user: any) {
+  create(@Body() dto: CreateAppointmentDto, @CurrentUser() user: AuthUser) {
     return this.appointmentsService.create(dto, user);
   }
 
@@ -42,7 +44,7 @@ export class AppointmentsController {
 
   @Get('my')
   @ApiOperation({ summary: 'Listar mis turnos' })
-  findMine(@CurrentUser() user: any) {
+  findMine(@CurrentUser() user: AuthUser) {
     return this.appointmentsService.findMine(user);
   }
 
@@ -73,12 +75,24 @@ export class AppointmentsController {
     return this.appointmentsService.updateStatus(id, dto);
   }
 
+  @Patch(':id/reschedule')
+  @ApiOperation({
+    summary: 'Reprogramar mi turno (hasta 2 veces y con 2 h de anticipación)',
+  })
+  reschedule(
+    @Param('id') id: string,
+    @Body() dto: RescheduleAppointmentDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.appointmentsService.reschedule(id, dto, user);
+  }
+
   @Patch(':id/cancel')
   @ApiOperation({ summary: 'Cancelar un turno' })
   cancel(
     @Param('id') id: string,
     @Body() dto: CancelAppointmentDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthUser,
   ) {
     return this.appointmentsService.cancel(id, dto, user);
   }
